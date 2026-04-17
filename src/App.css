@@ -18,13 +18,14 @@
 .hero-panel {
   padding: 1.25rem;
   background:
-    radial-gradient(circle at top right, rgba(244, 186, 94, 0.28), transparent 35%),
-    linear-gradient(135deg, rgba(18, 38, 55, 0.98), rgba(29, 56, 77, 0.94));
+    radial-gradient(circle at top right, rgba(249, 115, 22, 0.22), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.18), transparent 32%),
+    linear-gradient(135deg, rgba(8, 18, 31, 0.98), rgba(16, 32, 51, 0.96));
 }
 
 .eyebrow {
   margin: 0 0 0.75rem;
-  color: rgba(248, 241, 227, 0.72);
+  color: rgba(237, 243, 248, 0.72);
   text-transform: uppercase;
   letter-spacing: 0.22em;
   font-size: 0.72rem;
@@ -45,7 +46,7 @@
 .lede {
   margin-top: 0.9rem;
   max-width: 32rem;
-  color: rgba(248, 241, 227, 0.82);
+  color: rgba(237, 243, 248, 0.78);
 }
 
 .library-pill {
@@ -55,7 +56,7 @@
   gap: 0.7rem;
   padding: 0.6rem 0.9rem;
   border-radius: 999px;
-  background: rgba(248, 241, 227, 0.12);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--hero-text);
   backdrop-filter: blur(18px);
 }
@@ -66,8 +67,8 @@
   width: 2.15rem;
   height: 2.15rem;
   border-radius: 999px;
-  background: rgba(244, 186, 94, 0.92);
-  color: #112433;
+  background: linear-gradient(135deg, #fb923c, #f97316);
+  color: #1b1209;
   font-weight: 700;
 }
 
@@ -109,23 +110,23 @@
 
 .phase-starting,
 .phase-loading {
-  background: rgba(232, 179, 74, 0.16);
-  color: #94640f;
+  background: rgba(249, 115, 22, 0.16);
+  color: #fdba74;
 }
 
 .phase-scanning {
-  background: rgba(44, 136, 108, 0.14);
-  color: #0e6f55;
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
 }
 
 .phase-preview {
-  background: rgba(57, 92, 149, 0.13);
-  color: #264f91;
+  background: rgba(59, 130, 246, 0.16);
+  color: #93c5fd;
 }
 
 .phase-error {
-  background: rgba(181, 69, 52, 0.13);
-  color: #9d3423;
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
 }
 
 .scanner-frame {
@@ -134,8 +135,8 @@
   min-height: 18rem;
   border-radius: 1.4rem;
   background:
-    linear-gradient(180deg, rgba(8, 18, 27, 0.16), rgba(8, 18, 27, 0.42)),
-    linear-gradient(135deg, #d7e4ea, #95abb5);
+    linear-gradient(180deg, rgba(4, 10, 18, 0.12), rgba(4, 10, 18, 0.52)),
+    linear-gradient(135deg, #0d1722, #1b3345);
 }
 
 .scanner-region {
@@ -164,10 +165,10 @@
   width: min(72vw, 15rem);
   height: 8.7rem;
   border-radius: 1.2rem;
-  border: 2px solid rgba(248, 241, 227, 0.95);
+  border: 2px solid rgba(237, 243, 248, 0.92);
   box-shadow:
-    0 0 0 999px rgba(9, 16, 23, 0.33),
-    inset 0 0 0 1px rgba(248, 241, 227, 0.3);
+    0 0 0 999px rgba(3, 8, 14, 0.42),
+    inset 0 0 0 1px rgba(237, 243, 248, 0.22);
 }
 
 .manual-form {
@@ -216,7 +217,9 @@
 
 .primary-button,
 .secondary-button,
-.ghost-button {
+.ghost-button,
+.danger-button,
+.icon-button {
   border: none;
   border-radius: 999px;
   padding: 0.95rem 1.1rem;
@@ -231,24 +234,42 @@
 
 .primary-button:hover,
 .secondary-button:hover,
-.ghost-button:hover {
+.ghost-button:hover,
+.danger-button:hover,
+.icon-button:hover {
   transform: translateY(-1px);
 }
 
 .primary-button {
-  background: var(--accent);
-  color: #f8f1e3;
-  box-shadow: 0 14px 30px rgba(25, 69, 98, 0.22);
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+  color: #140d07;
+  box-shadow: 0 14px 30px rgba(249, 115, 22, 0.2);
 }
 
 .secondary-button {
-  background: #123f57;
-  color: #f8f1e3;
+  background: #193246;
+  color: #edf3f8;
 }
 
 .ghost-button {
-  background: rgba(18, 63, 87, 0.08);
+  background: rgba(168, 194, 218, 0.08);
   color: var(--text);
+}
+
+.danger-button {
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
+}
+
+.icon-button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0.4rem;
+  border-radius: 999px;
+  background: rgba(168, 194, 218, 0.08);
+  color: var(--text);
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
 .preview-card {
@@ -267,7 +288,7 @@
   overflow: hidden;
   border-radius: 1rem;
   background:
-    linear-gradient(140deg, rgba(18, 63, 87, 0.12), rgba(244, 186, 94, 0.25));
+    linear-gradient(140deg, rgba(59, 130, 246, 0.12), rgba(249, 115, 22, 0.22));
 }
 
 .preview-art {
@@ -286,6 +307,24 @@
   min-width: 0;
 }
 
+.duplicate-alert {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  border-radius: 1rem;
+  background: rgba(249, 115, 22, 0.12);
+}
+
+.duplicate-alert strong {
+  display: block;
+  color: #fdba74;
+}
+
+.duplicate-alert p {
+  margin-top: 0.35rem;
+  color: var(--text);
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -296,7 +335,7 @@
 .detail-grid div {
   padding: 0.75rem 0.85rem;
   border-radius: 1rem;
-  background: rgba(18, 63, 87, 0.05);
+  background: rgba(168, 194, 218, 0.06);
 }
 
 .detail-grid dd {
@@ -316,7 +355,7 @@
   border: 1px dashed var(--border);
   border-radius: 1.4rem;
   text-align: center;
-  background: rgba(248, 241, 227, 0.45);
+  background: rgba(20, 33, 47, 0.72);
 }
 
 .empty-state p {
@@ -331,6 +370,50 @@
   gap: 0.85rem;
 }
 
+.swipe-row {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.2rem;
+}
+
+.swipe-actions {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  width: 10.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.swipe-actions.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.swipe-delete-button,
+.swipe-confirm-button,
+.swipe-cancel-button {
+  border: none;
+  color: #f8f1e3;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.swipe-delete-button,
+.swipe-confirm-button {
+  width: 100%;
+  background: #b91c1c;
+}
+
+.swipe-cancel-button {
+  width: 100%;
+  background: #334155;
+}
+
 .library-card {
   display: grid;
   grid-template-columns: 4.7rem 1fr;
@@ -340,6 +423,24 @@
   border: 1px solid var(--border);
   border-radius: 1.2rem;
   background: var(--surface);
+}
+
+.library-card-button {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: transform 180ms ease;
+}
+
+.library-card-button.is-swiped {
+  transform: translateX(-10.5rem);
+}
+
+.library-card-button:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .library-cover {
@@ -377,6 +478,93 @@
 .cover-fallback.compact {
   padding: 0.5rem;
   font-size: 0.72rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  align-items: end;
+  padding: 1rem;
+  background: rgba(9, 16, 23, 0.45);
+  backdrop-filter: blur(8px);
+}
+
+.book-modal {
+  width: min(100%, 42rem);
+  margin: 0 auto;
+  max-height: min(85vh, 52rem);
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1.4rem;
+  background: rgba(11, 20, 31, 0.98);
+  box-shadow: var(--shadow);
+}
+
+.book-modal-header {
+  margin-bottom: 0.75rem;
+}
+
+.edit-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.edit-form label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.edit-form span {
+  color: var(--muted-strong);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.edit-form input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.edit-form input:focus,
+.icon-button:focus,
+.danger-button:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.modal-actions {
+  margin-top: 0.25rem;
+}
+
+.delete-confirm-box {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+  padding: 1rem;
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  border-radius: 1rem;
+  background: rgba(127, 29, 29, 0.16);
+}
+
+.delete-confirm-box strong,
+.delete-confirm-box p {
+  margin: 0;
 }
 
 @media (min-width: 760px) {
@@ -421,9 +609,22 @@
     grid-template-columns: 1fr;
   }
 
+  .edit-grid {
+    grid-template-columns: 1fr;
+  }
+
   .primary-button,
   .secondary-button,
-  .ghost-button {
+  .ghost-button,
+  .danger-button {
     width: 100%;
+  }
+
+  .swipe-actions {
+    width: 9rem;
+  }
+
+  .library-card-button.is-swiped {
+    transform: translateX(-9rem);
   }
 }

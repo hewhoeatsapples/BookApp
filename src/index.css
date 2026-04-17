@@ -2,28 +2,32 @@
   font-family: 'Avenir Next', Avenir, 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #163246;
+  color: #edf3f8;
   background:
-    radial-gradient(circle at top, rgba(244, 186, 94, 0.28), transparent 30%),
-    linear-gradient(180deg, #f6efe2 0%, #ece5d9 100%);
+    radial-gradient(circle at top, rgba(117, 90, 255, 0.18), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.14), transparent 30%),
+    linear-gradient(180deg, #071018 0%, #0b1722 52%, #111d29 100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --text: #163246;
-  --muted: #5c7383;
-  --muted-strong: #6c6252;
-  --hero-text: #f8f1e3;
-  --accent: #9a4f1c;
-  --border: rgba(22, 50, 70, 0.12);
-  --panel: rgba(255, 252, 246, 0.86);
-  --surface: rgba(255, 255, 255, 0.72);
-  --shadow: 0 20px 45px rgba(60, 48, 29, 0.12);
+  color-scheme: dark;
+  --text: #edf3f8;
+  --muted: #91a8bc;
+  --muted-strong: #b5c3d1;
+  --hero-text: #f4f7fb;
+  --accent: #f97316;
+  --accent-strong: #fb923c;
+  --border: rgba(168, 194, 218, 0.14);
+  --panel: rgba(14, 24, 35, 0.82);
+  --surface: rgba(20, 33, 47, 0.9);
+  --surface-strong: rgba(26, 41, 57, 0.98);
+  --shadow: 0 24px 55px rgba(0, 0, 0, 0.34);
 }
 
 html {
   min-height: 100%;
-  background: #ece5d9;
+  background: #08111a;
 }
 
 body {
