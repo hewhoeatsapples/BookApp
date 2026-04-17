@@ -42,7 +42,10 @@ self.addEventListener('fetch', (event) => {
 
   if (
     url.hostname === 'openlibrary.org' ||
-    url.hostname === 'covers.openlibrary.org'
+    url.hostname === 'covers.openlibrary.org' ||
+    url.hostname === 'www.googleapis.com' ||
+    url.hostname === 'books.google.com' ||
+    url.hostname === 'books.googleusercontent.com'
   ) {
     event.respondWith(staleWhileRevalidate(request))
   }
