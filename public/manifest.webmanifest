@@ -1,0 +1,29 @@
+{
+  "name": "BookApp Library Log",
+  "short_name": "BookApp",
+  "description": "Scan ISBN barcodes, preview book details, and save your personal library on iPhone or the web.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ece5d9",
+  "theme_color": "#123f57",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

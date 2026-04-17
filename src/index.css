@@ -1,0 +1,71 @@
+:root {
+  font-family: 'Avenir Next', Avenir, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #163246;
+  background:
+    radial-gradient(circle at top, rgba(244, 186, 94, 0.28), transparent 30%),
+    linear-gradient(180deg, #f6efe2 0%, #ece5d9 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --text: #163246;
+  --muted: #5c7383;
+  --muted-strong: #6c6252;
+  --hero-text: #f8f1e3;
+  --accent: #9a4f1c;
+  --border: rgba(22, 50, 70, 0.12);
+  --panel: rgba(255, 252, 246, 0.86);
+  --surface: rgba(255, 255, 255, 0.72);
+  --shadow: 0 20px 45px rgba(60, 48, 29, 0.12);
+}
+
+html {
+  min-height: 100%;
+  background: #ece5d9;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--text);
+}
+
+body,
+button,
+input {
+  font-family: inherit;
+}
+
+button,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  max-width: 100%;
+}
+
+#root {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding:
+    max(0.8rem, env(safe-area-inset-top))
+    max(0.8rem, env(safe-area-inset-right))
+    max(1.25rem, env(safe-area-inset-bottom))
+    max(0.8rem, env(safe-area-inset-left));
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
+}
