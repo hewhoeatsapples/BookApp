@@ -1,5 +1,10 @@
-const CACHE_NAME = 'bookapp-shell-v1'
-const APP_SHELL = ['/', '/manifest.webmanifest', '/apple-touch-icon.png']
+const CACHE_NAME = 'bookapp-shell-v2'
+const BASE_PATH = self.location.pathname.replace(/sw\.js$/, '')
+const APP_SHELL = [
+  BASE_PATH,
+  `${BASE_PATH}manifest.webmanifest`,
+  `${BASE_PATH}apple-touch-icon.png`,
+]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -57,7 +62,7 @@ async function networkFirst(request) {
     }
 
     if (request.mode === 'navigate') {
-      const appShell = await cache.match('/')
+      const appShell = await cache.match(BASE_PATH)
       if (appShell) {
         return appShell
       }

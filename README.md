@@ -29,3 +29,4 @@ npm run build
 - Camera scanning works best over `https` or on local development hosts like `localhost`.
 - The current version stores the library in browser `localStorage`, so each device/browser keeps its own copy.
 - On iPhone, open the deployed site in Safari, tap `Share`, then choose `Add to Home Screen`.
+- GitHub Pages deployment is configured for `https://hewhoeatsapples.github.io/BookApp/`.
