@@ -94,6 +94,10 @@ type EditDraft = {
 
 const STORAGE_KEY = 'bookapp-library'
 const SCANNER_REGION_ID = 'isbn-scanner-region'
+const BOOK_SCANNER_FORMATS = [
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.UPC_A,
+]
 
 function App() {
   const [library, setLibrary] = useState<LibraryBook[]>(() => loadLibrary())
@@ -130,12 +134,7 @@ function App() {
 
   useEffect(() => {
     const scanner = new Html5Qrcode(SCANNER_REGION_ID, {
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-      ],
+      formatsToSupport: BOOK_SCANNER_FORMATS,
       useBarCodeDetectorIfSupported: true,
       verbose: false,
     })
@@ -151,9 +150,10 @@ function App() {
           await scanner.start(
             { facingMode: 'environment' },
             {
-              fps: 10,
-              qrbox: { width: 240, height: 140 },
-              aspectRatio: 1.586,
+              fps: 14,
+              qrbox: getBarcodeBoxSize,
+              aspectRatio: 1.333334,
+              disableFlip: true,
             },
             (decodedText) => {
               void handleDecodedText(decodedText)
@@ -162,7 +162,9 @@ function App() {
           )
 
           setPhase('scanning')
-          setNotice('Scanner ready. Hold the ISBN steady inside the frame.')
+          setNotice(
+            'Scanner ready. Hold the barcode flat inside the wide frame for the fastest lock.',
+          )
         } catch (error) {
           console.error(error)
           setPhase('error')
@@ -562,9 +564,12 @@ function App() {
             <input
               id="manual-isbn"
               type="text"
-              inputMode="numeric"
+              inputMode="text"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
               autoComplete="off"
-              placeholder="9780143127741"
+              placeholder="9780143127741 or 030640615X"
               value={manualIsbn}
               onChange={(event) => setManualIsbn(event.target.value)}
             />
@@ -1167,6 +1172,19 @@ function draftToLookupBook(
         : selectedBook.pageCount,
     coverUrl: draft.coverUrl.trim() || null,
   }
+}
+
+function getBarcodeBoxSize(viewfinderWidth: number, viewfinderHeight: number) {
+  const width = Math.max(
+    220,
+    Math.min(Math.floor(viewfinderWidth * 0.84), 380),
+  )
+  const height = Math.max(
+    110,
+    Math.min(Math.floor(viewfinderHeight * 0.28), 160),
+  )
+
+  return { width, height }
 }
 
 function normalizeComparisonText(value: string) {
