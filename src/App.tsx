@@ -1,6 +1,26 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import type { User } from 'firebase/auth'
+import {
+  browserLocalPersistence,
+  getRedirectResult,
+  onAuthStateChanged,
+  setPersistence,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+} from 'firebase/auth'
+import {
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+} from 'firebase/firestore'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
+import { auth, db, googleProvider, isFirebaseConfigured } from './firebase'
 import './App.css'
 
 type LibraryBook = {
@@ -28,6 +48,14 @@ type DuplicateMatch = {
 }
 
 type ScanPhase = 'starting' | 'scanning' | 'loading' | 'preview' | 'error'
+
+type SyncState =
+  | 'config-missing'
+  | 'auth-loading'
+  | 'signed-out'
+  | 'syncing'
+  | 'synced'
+  | 'error'
 
 type OpenLibraryBook = {
   title?: string
@@ -110,6 +138,11 @@ function App() {
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null)
   const [swipedBookId, setSwipedBookId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [authBusy, setAuthBusy] = useState(false)
+  const [syncState, setSyncState] = useState<SyncState>(
+    isFirebaseConfigured ? 'auth-loading' : 'config-missing',
+  )
 
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const libraryRef = useRef<LibraryBook[]>(library)
@@ -117,6 +150,7 @@ function App() {
   const touchStartXRef = useRef<number | null>(null)
   const touchedBookIdRef = useRef<string | null>(null)
   const suppressCardOpenRef = useRef(false)
+  const importedUserRef = useRef<string | null>(null)
 
   const duplicateMatch = pendingBook
     ? findDuplicateByTitleAndAuthor(library, pendingBook)
@@ -131,6 +165,8 @@ function App() {
           draftToLookupBook(editDraft, selectedBook),
         )
       : null
+
+  const syncDescription = getSyncDescription(syncState, currentUser)
 
   useEffect(() => {
     const scanner = new Html5Qrcode(SCANNER_REGION_ID, {
@@ -201,6 +237,91 @@ function App() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(library))
   }, [library])
 
+  useEffect(() => {
+    if (!auth || !googleProvider) {
+      return
+    }
+
+    void setPersistence(auth, browserLocalPersistence).catch(() => undefined)
+    void getRedirectResult(auth).catch((error) => {
+      console.error(error)
+      setNotice('Google sign-in did not complete. You can try again.')
+      setSyncState('error')
+    })
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (user) => {
+        setCurrentUser(user)
+        setSyncState(user ? 'syncing' : 'signed-out')
+      },
+      (error) => {
+        console.error(error)
+        setCurrentUser(null)
+        setSyncState('error')
+        setNotice('Authentication failed. Using local library on this device.')
+      },
+    )
+
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
+    if (!db || !currentUser) {
+      return
+    }
+    const booksCollection = collection(db, 'users', currentUser.uid, 'books')
+    const booksQuery = query(booksCollection, orderBy('addedAt', 'desc'))
+
+    const unsubscribe = onSnapshot(
+      booksQuery,
+      (snapshot) => {
+        const remoteBooks = snapshot.docs.map((snapshotDoc) =>
+          hydrateLibraryBook(snapshotDoc.id, snapshotDoc.data()),
+        )
+
+        if (
+          snapshot.empty &&
+          importedUserRef.current !== currentUser.uid
+        ) {
+          importedUserRef.current = currentUser.uid
+          const localBooks = loadLibrary()
+
+          if (localBooks.length > 0) {
+            void Promise.all(
+              localBooks.map((book) => saveBookToCloud(currentUser.uid, book)),
+            )
+              .then(() => {
+                setNotice(
+                  `Imported ${localBooks.length} local book${localBooks.length === 1 ? '' : 's'} into your private cloud library.`,
+                )
+              })
+              .catch((error) => {
+                console.error(error)
+                setNotice(
+                  'Cloud sync is connected, but importing your local library did not finish.',
+                )
+              })
+            return
+          }
+        }
+
+        setLibrary(remoteBooks)
+        setSyncState('synced')
+      },
+      (error) => {
+        console.error(error)
+        setLibrary(loadLibrary())
+        setSyncState('error')
+        setNotice(
+          'Cloud sync is unavailable right now, so the app is using the local copy on this device.',
+        )
+      },
+    )
+
+    return unsubscribe
+  }, [currentUser])
+
   const handleDecodedText = useEffectEvent(async (decodedText: string) => {
     if (processingRef.current) {
       return
@@ -268,6 +389,50 @@ function App() {
     }
   }
 
+  async function handleGoogleSignIn() {
+    if (!auth || !googleProvider) {
+      setNotice('Cloud sync has not been configured yet.')
+      return
+    }
+
+    setAuthBusy(true)
+
+    try {
+      if (shouldUseRedirectSignIn()) {
+        await signInWithRedirect(auth, googleProvider)
+        return
+      }
+
+      await signInWithPopup(auth, googleProvider)
+    } catch (error) {
+      console.error(error)
+      setNotice('Google sign-in failed. Please try again.')
+      setSyncState('error')
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  async function handleSignOutClick() {
+    if (!auth) {
+      return
+    }
+
+    setAuthBusy(true)
+
+    try {
+      await signOut(auth)
+      setNotice(
+        'Signed out. The app is showing the cached library stored on this device.',
+      )
+    } catch (error) {
+      console.error(error)
+      setNotice('Could not sign out right now. Please try again.')
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
   function handleManualLookup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -325,15 +490,12 @@ function App() {
     const addedAt = new Date().toISOString()
     const sameIsbn = library.some((book) => book.isbn === pendingBook.isbn)
     const ownedMatch = findDuplicateByTitleAndAuthor(library, pendingBook)
+    const existing = library.find((book) => book.isbn === pendingBook.isbn)
+    const nextBook: LibraryBook = existing
+      ? { ...existing, ...pendingBook, addedAt }
+      : { ...pendingBook, id: crypto.randomUUID(), addedAt }
 
     setLibrary((currentLibrary) => {
-      const existing = currentLibrary.find(
-        (book) => book.isbn === pendingBook.isbn,
-      )
-      const nextBook: LibraryBook = existing
-        ? { ...existing, ...pendingBook, addedAt }
-        : { ...pendingBook, id: crypto.randomUUID(), addedAt }
-
       const withoutExisting = currentLibrary.filter(
         (book) => book.isbn !== pendingBook.isbn,
       )
@@ -341,6 +503,7 @@ function App() {
       return [nextBook, ...withoutExisting]
     })
 
+    void persistBook(nextBook)
     processingRef.current = false
     setPendingBook(null)
     setManualIsbn('')
@@ -418,26 +581,29 @@ function App() {
       ? Number(editDraft.pageCount)
       : null
 
+    const updatedBook: LibraryBook = {
+      ...selectedBook!,
+      isbn: nextIsbn,
+      title: normalizedTitle,
+      authors: nextAuthors,
+      publisher: editDraft.publisher.trim() || null,
+      publishDate: editDraft.publishDate.trim() || null,
+      pageCount:
+        nextPageCount !== null && Number.isFinite(nextPageCount)
+          ? nextPageCount
+          : null,
+      coverUrl: editDraft.coverUrl.trim() || null,
+    }
+
     setLibrary((currentLibrary) =>
-      currentLibrary.map((book) =>
-        book.id === editDraft.id
-          ? {
-              ...book,
-              isbn: nextIsbn,
-              title: normalizedTitle,
-              authors: nextAuthors,
-              publisher: editDraft.publisher.trim() || null,
-              publishDate: editDraft.publishDate.trim() || null,
-              pageCount:
-                nextPageCount !== null && Number.isFinite(nextPageCount)
-                  ? nextPageCount
-                  : null,
-              coverUrl: editDraft.coverUrl.trim() || null,
-            }
-          : book,
-      ),
+      currentLibrary
+        .map((book) => (book.id === editDraft.id ? updatedBook : book))
+        .sort((leftBook, rightBook) =>
+          rightBook.addedAt.localeCompare(leftBook.addedAt),
+        ),
     )
 
+    void persistBook(updatedBook)
     setNotice(`Updated "${normalizedTitle}".`)
     setEditDraft(null)
     setDeleteConfirmId(null)
@@ -451,6 +617,7 @@ function App() {
     setLibrary((currentLibrary) =>
       currentLibrary.filter((book) => book.id !== selectedBook.id),
     )
+    void removeBook(selectedBook.id)
     setNotice(`Removed "${selectedBook.title}" from your library.`)
     setEditDraft(null)
     setDeleteConfirmId(null)
@@ -474,6 +641,7 @@ function App() {
     setLibrary((currentLibrary) =>
       currentLibrary.filter((book) => book.id !== bookId),
     )
+    void removeBook(bookId)
     setNotice(`Removed "${bookToDelete.title}" from your library.`)
     setDeleteConfirmId(null)
     setSwipedBookId(null)
@@ -522,6 +690,38 @@ function App() {
     openBookEditor(book)
   }
 
+  async function persistBook(book: LibraryBook) {
+    if (!db || !currentUser) {
+      return
+    }
+
+    try {
+      await saveBookToCloud(currentUser.uid, book)
+    } catch (error) {
+      console.error(error)
+      setSyncState('error')
+      setNotice(
+        'Your change is saved on this device, but cloud sync did not finish.',
+      )
+    }
+  }
+
+  async function removeBook(bookId: string) {
+    if (!db || !currentUser) {
+      return
+    }
+
+    try {
+      await deleteDoc(doc(db, 'users', currentUser.uid, 'books', bookId))
+    } catch (error) {
+      console.error(error)
+      setSyncState('error')
+      setNotice(
+        'The book was removed locally, but cloud sync did not finish.',
+      )
+    }
+  }
+
   return (
     <main className="app-shell">
       <section className="hero-panel">
@@ -535,9 +735,58 @@ function App() {
               gets added.
             </p>
           </div>
-          <div className="library-pill">
-            <span>{library.length}</span>
-            books saved
+
+          <div className="hero-actions">
+            <div className="library-pill">
+              <span>{library.length}</span>
+              books saved
+            </div>
+
+            <section className="account-card">
+              <p className="preview-label">Private Library</p>
+
+              {isFirebaseConfigured ? (
+                currentUser ? (
+                  <>
+                    <h2>{currentUser.displayName ?? 'Signed In'}</h2>
+                    <p>{syncDescription}</p>
+                    <div className="action-row">
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={handleSignOutClick}
+                        disabled={authBusy}
+                      >
+                        {authBusy ? 'Signing Out...' : 'Sign Out'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h2>Turn On Private Sync</h2>
+                    <p>{syncDescription}</p>
+                    <div className="action-row">
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={handleGoogleSignIn}
+                        disabled={authBusy}
+                      >
+                        {authBusy ? 'Opening Sign-In...' : 'Sign In With Google'}
+                      </button>
+                    </div>
+                  </>
+                )
+              ) : (
+                <>
+                  <h2>Cloud Sync Not Configured</h2>
+                  <p>
+                    Add your Firebase config to enable one private library tied
+                    to your login.
+                  </p>
+                </>
+              )}
+            </section>
           </div>
         </div>
       </section>
@@ -659,7 +908,7 @@ function App() {
         <div className="panel-header">
           <div>
             <h2>Your Library</h2>
-            <p>Books are saved locally on this device and browser.</p>
+            <p>{syncDescription}</p>
           </div>
         </div>
 
@@ -884,7 +1133,7 @@ function App() {
               {deleteConfirmId === selectedBook.id ? (
                 <div className="delete-confirm-box" role="alert">
                   <strong>Delete this title?</strong>
-                  <p>This removes the saved entry from this device.</p>
+                  <p>This removes the saved entry from your private library.</p>
                   <div className="action-row">
                     <button
                       className="danger-button"
@@ -922,6 +1171,31 @@ function loadLibrary() {
     return Array.isArray(parsed) ? (parsed as LibraryBook[]) : []
   } catch {
     return []
+  }
+}
+
+function hydrateLibraryBook(
+  documentId: string,
+  value: Record<string, unknown>,
+): LibraryBook {
+  return {
+    id: typeof value.id === 'string' && value.id ? value.id : documentId,
+    isbn: typeof value.isbn === 'string' ? value.isbn : '',
+    title: typeof value.title === 'string' ? value.title : 'Untitled book',
+    authors: Array.isArray(value.authors)
+      ? value.authors.filter(
+          (author): author is string => typeof author === 'string',
+        )
+      : [],
+    publisher: typeof value.publisher === 'string' ? value.publisher : null,
+    publishDate:
+      typeof value.publishDate === 'string' ? value.publishDate : null,
+    pageCount: typeof value.pageCount === 'number' ? value.pageCount : null,
+    coverUrl: typeof value.coverUrl === 'string' ? value.coverUrl : null,
+    addedAt:
+      typeof value.addedAt === 'string'
+        ? value.addedAt
+        : new Date().toISOString(),
   }
 }
 
@@ -1203,6 +1477,42 @@ function formatAddedDate(value: string) {
     day: 'numeric',
     year: 'numeric',
   })
+}
+
+function shouldUseRedirectSignIn() {
+  return (
+    window.matchMedia('(max-width: 820px)').matches ||
+    window.matchMedia('(pointer: coarse)').matches
+  )
+}
+
+function getSyncDescription(syncState: SyncState, currentUser: User | null) {
+  switch (syncState) {
+    case 'config-missing':
+      return 'Cloud sync is not configured yet, so this app is using browser storage only.'
+    case 'auth-loading':
+      return 'Checking your sign-in status and private library.'
+    case 'signed-out':
+      return 'Sign in with Google to keep one private library across devices.'
+    case 'syncing':
+      return currentUser
+        ? 'Syncing your private library from the cloud.'
+        : 'Connecting to cloud sync.'
+    case 'synced':
+      return currentUser
+        ? `Private library synced for ${currentUser.email ?? currentUser.displayName ?? 'your account'}.`
+        : 'Your private library is synced.'
+    case 'error':
+      return 'Cloud sync is temporarily unavailable, so the app is using this device cache.'
+  }
+}
+
+async function saveBookToCloud(userId: string, book: LibraryBook) {
+  if (!db) {
+    return
+  }
+
+  await setDoc(doc(db, 'users', userId, 'books', book.id), book)
 }
 
 export default App

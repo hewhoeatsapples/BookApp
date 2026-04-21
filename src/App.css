@@ -37,6 +37,13 @@
   gap: 1rem;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  align-items: stretch;
+}
+
 .hero-copy h1 {
   margin: 0;
   max-width: 18ch;
@@ -59,6 +66,27 @@
   background: rgba(255, 255, 255, 0.08);
   color: var(--hero-text);
   backdrop-filter: blur(18px);
+}
+
+.account-card {
+  flex: 1 1 16rem;
+  min-width: min(100%, 16rem);
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(237, 243, 248, 0.12);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--hero-text);
+  backdrop-filter: blur(16px);
+}
+
+.account-card h2 {
+  margin: 0;
+  color: var(--hero-text);
+}
+
+.account-card p {
+  margin-top: 0.45rem;
+  color: rgba(237, 243, 248, 0.78);
 }
 
 .library-pill span {
@@ -249,6 +277,15 @@
 .secondary-button {
   background: #193246;
   color: #edf3f8;
+}
+
+.secondary-button:disabled,
+.primary-button:disabled,
+.ghost-button:disabled,
+.danger-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+  transform: none;
 }
 
 .ghost-button {
