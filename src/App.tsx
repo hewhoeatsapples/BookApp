@@ -395,17 +395,18 @@ function App() {
       return
     }
 
-    setAuthBusy(true)
+  setAuthBusy(true)
 
     try {
-      if (shouldUseRedirectSignIn()) {
+      await signInWithPopup(auth, googleProvider)
+    } catch (error) {
+      console.error(error)
+
+      if (isPopupFallbackError(error)) {
         await signInWithRedirect(auth, googleProvider)
         return
       }
 
-      await signInWithPopup(auth, googleProvider)
-    } catch (error) {
-      console.error(error)
       setNotice('Google sign-in failed. Please try again.')
       setSyncState('error')
     } finally {
@@ -1479,13 +1480,6 @@ function formatAddedDate(value: string) {
   })
 }
 
-function shouldUseRedirectSignIn() {
-  return (
-    window.matchMedia('(max-width: 820px)').matches ||
-    window.matchMedia('(pointer: coarse)').matches
-  )
-}
-
 function getSyncDescription(syncState: SyncState, currentUser: User | null) {
   switch (syncState) {
     case 'config-missing':
@@ -1505,6 +1499,18 @@ function getSyncDescription(syncState: SyncState, currentUser: User | null) {
     case 'error':
       return 'Cloud sync is temporarily unavailable, so the app is using this device cache.'
   }
+}
+
+function isPopupFallbackError(error: unknown) {
+  const code =
+    typeof error === 'object' && error && 'code' in error
+      ? String(error.code)
+      : ''
+
+  return (
+    code === 'auth/popup-blocked' ||
+    code === 'auth/operation-not-supported-in-this-environment'
+  )
 }
 
 async function saveBookToCloud(userId: string, book: LibraryBook) {
