@@ -214,6 +214,29 @@
   text-transform: uppercase;
 }
 
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.checkbox-row input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.checkbox-row span {
+  color: var(--text);
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .manual-row,
 .action-row {
   display: flex;
@@ -486,6 +509,10 @@
 
 .library-copy {
   min-width: 0;
+}
+
+.library-copy span + span {
+  margin-top: -0.1rem;
 }
 
 .library-copy h3,

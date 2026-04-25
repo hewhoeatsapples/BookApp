@@ -32,6 +32,7 @@ type LibraryBook = {
   publishDate: string | null
   pageCount: number | null
   coverUrl: string | null
+  isRead: boolean
   addedAt: string
 }
 
@@ -118,6 +119,7 @@ type EditDraft = {
   publishDate: string
   pageCount: string
   coverUrl: string
+  isRead: boolean
 }
 
 const STORAGE_KEY = 'bookapp-library'
@@ -493,7 +495,12 @@ function App() {
     const ownedMatch = findDuplicateByTitleAndAuthor(library, pendingBook)
     const existing = library.find((book) => book.isbn === pendingBook.isbn)
     const nextBook: LibraryBook = existing
-      ? { ...existing, ...pendingBook, addedAt }
+      ? {
+          ...existing,
+          ...pendingBook,
+          isRead: existing.isRead || pendingBook.isRead,
+          addedAt,
+        }
       : { ...pendingBook, id: crypto.randomUUID(), addedAt }
 
     setLibrary((currentLibrary) => {
@@ -546,6 +553,7 @@ function App() {
       publishDate: book.publishDate ?? '',
       pageCount: book.pageCount ? String(book.pageCount) : '',
       coverUrl: book.coverUrl ?? '',
+      isRead: book.isRead,
     })
   }
 
@@ -594,6 +602,7 @@ function App() {
           ? nextPageCount
           : null,
       coverUrl: editDraft.coverUrl.trim() || null,
+      isRead: editDraft.isRead,
     }
 
     setLibrary((currentLibrary) =>
@@ -884,6 +893,21 @@ function App() {
                 </div>
               </dl>
 
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={pendingBook.isRead}
+                  onChange={(event) =>
+                    setPendingBook((currentBook) =>
+                      currentBook
+                        ? { ...currentBook, isRead: event.target.checked }
+                        : currentBook,
+                    )
+                  }
+                />
+                <span>I have read this book</span>
+              </label>
+
               <div className="action-row">
                 <button
                   className="primary-button"
@@ -978,6 +1002,7 @@ function App() {
                         : 'Author unknown'}
                     </p>
                     <span>ISBN {book.isbn}</span>
+                    <span>{book.isRead ? 'Read' : 'Unread'}</span>
                     <strong>{formatAddedDate(book.addedAt)}</strong>
                   </div>
                 </button>
@@ -1100,6 +1125,17 @@ function App() {
                 />
               </label>
 
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={editDraft.isRead}
+                  onChange={(event) =>
+                    updateEditDraft('isRead', event.target.checked)
+                  }
+                />
+                <span>Mark this book as read</span>
+              </label>
+
               {editorDuplicateMatch ? (
                 <div className="duplicate-alert" role="alert">
                   <strong>This edit matches another copy you own.</strong>
@@ -1169,7 +1205,11 @@ function loadLibrary() {
     }
 
     const parsed = JSON.parse(stored)
-    return Array.isArray(parsed) ? (parsed as LibraryBook[]) : []
+    return Array.isArray(parsed)
+      ? parsed.map((book, index) =>
+          hydrateLibraryBook(`local-${index}`, book as Record<string, unknown>),
+        )
+      : []
   } catch {
     return []
   }
@@ -1193,6 +1233,7 @@ function hydrateLibraryBook(
       typeof value.publishDate === 'string' ? value.publishDate : null,
     pageCount: typeof value.pageCount === 'number' ? value.pageCount : null,
     coverUrl: typeof value.coverUrl === 'string' ? value.coverUrl : null,
+    isRead: value.isRead === true,
     addedAt:
       typeof value.addedAt === 'string'
         ? value.addedAt
@@ -1240,6 +1281,7 @@ async function fetchBookByIsbn(isbn: string): Promise<BookLookupResult> {
       publishDate: mergedBook.publishDate ?? null,
       pageCount: mergedBook.pageCount ?? null,
       coverUrl: mergedBook.coverUrl ?? null,
+      isRead: false,
     },
   }
 }
@@ -1446,6 +1488,7 @@ function draftToLookupBook(
         ? parsedPageCount
         : selectedBook.pageCount,
     coverUrl: draft.coverUrl.trim() || null,
+    isRead: draft.isRead,
   }
 }
 
