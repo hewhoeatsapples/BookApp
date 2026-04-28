@@ -139,6 +139,9 @@ function App() {
   )
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null)
   const [swipedBookId, setSwipedBookId] = useState<string | null>(null)
+  const [swipeAction, setSwipeAction] = useState<'delete' | 'read' | null>(
+    null,
+  )
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [authBusy, setAuthBusy] = useState(false)
@@ -543,6 +546,7 @@ function App() {
 
   function openBookEditor(book: LibraryBook) {
     setSwipedBookId(null)
+    setSwipeAction(null)
     setDeleteConfirmId(null)
     setEditDraft({
       id: book.id,
@@ -632,6 +636,7 @@ function App() {
     setEditDraft(null)
     setDeleteConfirmId(null)
     setSwipedBookId(null)
+    setSwipeAction(null)
   }
 
   function requestDelete(bookId: string) {
@@ -655,9 +660,41 @@ function App() {
     setNotice(`Removed "${bookToDelete.title}" from your library.`)
     setDeleteConfirmId(null)
     setSwipedBookId(null)
+    setSwipeAction(null)
 
     if (editDraft?.id === bookId) {
       setEditDraft(null)
+    }
+  }
+
+  function toggleReadById(bookId: string) {
+    const bookToUpdate = library.find((book) => book.id === bookId)
+    if (!bookToUpdate) {
+      return
+    }
+
+    const updatedBook: LibraryBook = {
+      ...bookToUpdate,
+      isRead: !bookToUpdate.isRead,
+    }
+
+    setLibrary((currentLibrary) =>
+      currentLibrary.map((book) => (book.id === bookId ? updatedBook : book)),
+    )
+    void persistBook(updatedBook)
+    setNotice(
+      updatedBook.isRead
+        ? `Marked "${updatedBook.title}" as read.`
+        : `Marked "${updatedBook.title}" as unread.`,
+    )
+    setSwipedBookId(null)
+    setSwipeAction(null)
+    setDeleteConfirmId(null)
+
+    if (editDraft?.id === bookId) {
+      setEditDraft((currentDraft) =>
+        currentDraft ? { ...currentDraft, isRead: updatedBook.isRead } : null,
+      )
     }
   }
 
@@ -680,13 +717,23 @@ function App() {
     if (deltaX < -60) {
       suppressCardOpenRef.current = true
       setSwipedBookId(bookId)
+      setSwipeAction('delete')
       setDeleteConfirmId(null)
       return
     }
 
-    if (deltaX > 40) {
+    if (deltaX > 60) {
+      suppressCardOpenRef.current = true
+      setSwipedBookId(bookId)
+      setSwipeAction('read')
+      setDeleteConfirmId(null)
+      return
+    }
+
+    if (deltaX > 40 || deltaX < -40) {
       suppressCardOpenRef.current = true
       setSwipedBookId(null)
+      setSwipeAction(null)
       setDeleteConfirmId(null)
     }
   }
@@ -947,7 +994,26 @@ function App() {
             {library.map((book) => (
               <div key={book.id} className="swipe-row">
                 <div
-                  className={`swipe-actions ${swipedBookId === book.id ? 'is-visible' : ''}`}
+                  className={`swipe-actions swipe-actions-leading ${
+                    swipedBookId === book.id && swipeAction === 'read'
+                      ? 'is-visible'
+                      : ''
+                  }`}
+                >
+                  <button
+                    className="swipe-read-button"
+                    type="button"
+                    onClick={() => toggleReadById(book.id)}
+                  >
+                    {book.isRead ? 'Mark Unread' : 'Mark Read'}
+                  </button>
+                </div>
+                <div
+                  className={`swipe-actions swipe-actions-trailing ${
+                    swipedBookId === book.id && swipeAction === 'delete'
+                      ? 'is-visible'
+                      : ''
+                  }`}
                 >
                   {deleteConfirmId === book.id ? (
                     <>
@@ -977,7 +1043,15 @@ function App() {
                   )}
                 </div>
                 <button
-                  className={`library-card library-card-button ${swipedBookId === book.id ? 'is-swiped' : ''}`}
+                  className={`library-card library-card-button ${
+                    swipedBookId === book.id && swipeAction === 'delete'
+                      ? 'is-swiped-left'
+                      : ''
+                  } ${
+                    swipedBookId === book.id && swipeAction === 'read'
+                      ? 'is-swiped-right'
+                      : ''
+                  }`}
                   type="button"
                   onClick={() => handleCardClick(book)}
                   onTouchStart={(event) =>
@@ -995,14 +1069,16 @@ function App() {
                     )}
                   </div>
                   <div className="library-copy">
-                    <h3>{book.title}</h3>
+                    <div className="library-title-row">
+                      <h3>{book.title}</h3>
+                      {book.isRead ? <span className="read-indicator">Read</span> : null}
+                    </div>
                     <p>
                       {book.authors.length > 0
                         ? book.authors.join(', ')
                         : 'Author unknown'}
                     </p>
                     <span>ISBN {book.isbn}</span>
-                    <span>{book.isRead ? 'Read' : 'Unread'}</span>
                     <strong>{formatAddedDate(book.addedAt)}</strong>
                   </div>
                 </button>
